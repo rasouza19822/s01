@@ -1,3 +1,88 @@
+--app.js
+(function () {
+    'use strict';
+
+    var app = angular.module('app', [
+        'ngAnimate',
+        'ngRoute'
+    ]);
+
+    app.controller('clienteController', [
+        '$scope', '$http', 'clienteRepository', function($scope, $http, clienteRepository) {
+            $scope.selected = {};
+            $scope.clientes = [];
+            $scope.clientes = getClientes();
+
+        function getClientes() {
+            clienteRepository.getClientes().then(
+                function(result) {
+                    $scope.clientes = result.data;
+                },
+                function(error) {
+                    console.log(error.data, " Falha na requisição.");
+                }
+            );
+        }
+
+        $scope.removerCliente = function(cliente) {
+            clienteRepository.removerCliente(cliente).then(
+                function(result) {
+                    getClientes();
+                },
+                function(error) {
+                    console.log(error.data, " Falha na requisição.");
+                }
+            );
+        };
+
+        $scope.adicionarCliente = function(cliente) {
+            console.log("Log Adicionar controller:", cliente);
+            clienteRepository.adicionarCliente(cliente).then(
+                function(result) {
+                    getClientes();
+                    $scope.clienteModel = {};
+                    $scope.formCadastro.$setPristine();
+                },
+                function(error) {
+                    console.log(error.data, " Falha na requisição.");
+                }
+            );
+        };
+
+        $scope.atualizarCliente = function(cliente) {
+            console.log("Log Atualizar controller:", cliente);
+            clienteRepository.atualizarCliente(cliente).then(
+                function (result) {
+                    $scope.reset();
+                    getClientes();
+                },
+                function(error) {
+                    console.log(error.data, " Falha na requisição.");
+                }
+            );
+        };
+
+        $scope.getTemplate = function (cliente) {
+            return (cliente.Id === $scope.selected.Id) ? "edit" : "display";
+        };
+
+        $scope.editarCliente = function (cliente) {
+            console.log("editarCliente:", cliente, " selected:", $scope.selected);
+            $scope.selected = angular.copy(cliente);
+        };
+
+        $scope.reset = function() {
+            $scope.selected = {};
+        }
+
+    }]);
+
+})();
+
+
+
+
+
 -- index.html
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
