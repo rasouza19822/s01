@@ -1,0 +1,269 @@
+-- index.html
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+</head>
+<body ng-app="app">
+
+    <div class="container">
+        <div class="panel-body " ng-controller="clienteController as ctrl">
+            <form name="formCadastro" class="form" novalidate ng-submit="adicionarCliente(clienteModel)">
+                <label for="nome">Nome:</label>
+                <input type="text"
+                       name="nome"
+                       class="form-control input-sd"
+                       ng-maxlegth="50"
+                       ng-minlength="5"
+                       placeholder="Nome"
+                       ng-model="clienteModel.nome"
+                       required />
+                <br />
+                <label for="email">E-mail:</label>
+                <input type="email"
+                       name="email"
+                       ng-model="clienteModel.email"
+                       class="form-control input-sd"
+                       placeholder="E-mail"
+                       required/>
+                <br/>
+                <label for="ativo">Ativo:</label>
+                <input type="checkbox"
+                       name="ativo"
+                       class="input-sd"
+                       ng-model="clienteModel.ativo"/>
+
+                <p class="text-center">
+                    <button type="submit" ng-disabled="formCadastro.$invalid" class="btn btn-lg btn-primary" data-loading-text="Aguarde..." >Cadastrar</button>
+                </p>
+
+                <div class="alert alert-danger" ng-show="formCadastro.$invalid && formCadastro.$dirty">
+                    <ul>
+                        <li ng-show="formCadastro.nome.$invalid">
+                            O campo Nome é requerido e deve conter mais de 5 caracteres.
+                        </li>
+                        <li ng-show="formCadastro.email.$invalid">
+                            O campo e-mail é obrigatório.
+                        </li>
+                    </ul>
+                </div>
+            </form>
+            <br/>
+                <div>
+                    <table class="table table-striped table-bordered table-hover table-condensed">
+                        <thead>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Ativo</th>
+                        <th>-</th>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="cliente in clientes" ng-include="getTemplate(cliente)">
+                            <script type="text/ng-template" id="display">
+                            
+                            <td ng-model="cliente.nome">{{cliente.Nome}}</td>
+                            <td ng-model="cliente.email">{{cliente.Email}}</td>
+                            <td><input type="checkbox" ng-model="cliente.Ativo" ng-true-value='true' ng-false-value='false' ng-disabled="true" /></td>
+                            <td>
+                                <button type="button" class="btn btn-primary" ng-click="editarCliente(cliente)">Editar</button>
+                                <button type="button" class="btn btn-danger" ng-click="removerCliente(cliente)">Excluir</button>
+                            </td>
+                            
+                            </script>
+                            <script type="text/ng-template" id="edit">
+                                    <input type="hidden" ng-model="cliente.id"/>
+                                    <td><input type="text" ng-model="cliente.nome" class="form-control input-sm" /></td>
+                                    <td><input type="text" ng-model="cliente.email" class="form-control input-sm" /></td>
+                                    <td><input type="checkbox" ng-model="cliente.ativo" class="" /></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary" ng-click="atualizarCliente(cliente)">Save</button>
+                                        <button type="button" class="btn btn-danger" ng-click="reset()">Cancel</button>
+                                    </td>
+                            </script>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+    </div>
+        
+<!--angular references -->
+    <script src="Scripts/angular.js"></script>
+    <script src="Scripts/angular-animate.js"></script>
+    <script src="Scripts/angular-route.js"></script>
+    <script src="App/app.js"></script>
+<!-- custom references -->
+    <script src="App/controllers/clienteController.js"></script>
+    <script src="App/repositories/clienteRepository.js"></script>
+
+</body>
+</html>
+
+
+<!-- clienteRepository -->
+(function () {
+    'use strict';
+
+    angular
+        .module('app')
+        .factory('clienteRepository', clienteRepository);
+
+
+    function clienteRepository($http) {
+        return {
+            getClientes: function () {
+                console.log("Log get clientes repo");
+                return $http.get("/api/cliente");
+            },
+            adicionarCliente: function (cliente) {
+                console.log("Log adicionar cliente repo:", cliente);
+                return $http.post("/api/cliente/", cliente);
+            },
+            removerCliente: function (cliente) {
+                console.log("Log remover cliente repo:", cliente);
+                return $http.delete("/api/Cliente/" + cliente.Id);
+            },
+            atualizarCliente: function(cliente) {
+                console.log("Log atualizar cliente repo:", cliente);
+                return $http.put("/api/Cliente/" + cliente.Id, cliente);
+            }
+
+        };
+    }
+})();
+
+
+-- ClienteController
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Caching;
+using System.Web.Http;
+using AngularJSWebApiEmpty.Models;
+using AngularJSWebApiEmpty.Models.ViewModels;
+
+namespace AngularJSWebApiEmpty.Controllers
+{
+    [RoutePrefix("api/clientes")]
+    public class ClienteController : ApiController
+    {
+        private readonly ObjectCache cache;
+        private readonly CacheItemPolicy _cachePolicy;
+
+        public ClienteController()
+        {
+            //Create a cache instance
+            cache = MemoryCache.Default;
+
+            var clientes = new List<Cliente>()
+            {
+                new Cliente() {Id = Guid.NewGuid(), Nome = "Rafael", Email = "souza.rafael@gmail.com", Ativo = true},
+                new Cliente() {Id = Guid.NewGuid(), Nome = "Peter Parker", Email = "spiderman@msn.com", Ativo = false},
+                new Cliente() {Id = Guid.NewGuid(), Nome = "Bruce Wayne", Email = "bruce@live.com", Ativo = true}
+            };
+            _cachePolicy = new CacheItemPolicy();
+            cache.Add("Clientes", clientes, _cachePolicy);
+        }
+
+
+        // GET api/<controller>
+        public IEnumerable<Cliente> Get()
+        {
+            return (List<Cliente>)cache.Get("Clientes");
+        }
+
+        // GET api/<controller>/5
+        public Cliente Get(Guid id)
+        {
+            var list = (List<Cliente>)cache.Get("Clientes");
+            return list.FirstOrDefault(x => x.Id == id);
+        }
+
+        // POST api/<controller>
+        public void Post([FromBody]RegistrarClienteViewModel clienteViewModel)
+        {
+            var lista = (List<Cliente>)cache.Get("Clientes");
+            var cliente = new Cliente() {Id = Guid.NewGuid(), Nome = clienteViewModel.Nome, Email = clienteViewModel.Email, Ativo = clienteViewModel.Ativo};
+            
+            lista.Add(cliente);
+            cache.Set("Clientes", lista, _cachePolicy);
+        }
+
+        // PUT api/<controller>/5
+        public void Put(Guid id, [FromBody]Cliente cliente)
+        {
+            var lista = (List<Cliente>)cache.Get("Clientes");
+
+            var registro = lista.FirstOrDefault(x => x.Id == id);
+            registro.Nome = cliente.Nome;
+            registro.Email = cliente.Email;
+            registro.Ativo = cliente.Ativo;
+            cache.Set("Clientes", lista, _cachePolicy);
+        }
+
+        // DELETE api/<controller>/5
+        public void Delete(Guid id)
+        {
+            var lista = (List<Cliente>)cache.Get("Clientes");
+            lista = lista.Where(x => x.Id != id).ToList();
+            cache.Set("Clientes", lista, _cachePolicy);
+        }
+    }
+}
+
+-- cliente model --
+
+using System;
+
+namespace AngularJSWebApiEmpty.Models
+{
+    public class Cliente
+    {
+        public Guid Id { get; set; }
+        public string Nome { get; set; }
+        public string Email { get; set; }
+        public bool Ativo { get; set; }
+    }
+}
+
+
+-- registerCliente viewmodel -- 
+
+namespace AngularJSWebApiEmpty.Models.ViewModels
+{
+    public class RegistrarClienteViewModel
+    {
+        public string Nome { get; set; }
+        public string Email { get; set; }
+        public bool Ativo { get; set; }
+    }
+}
+
+-- webapiconfig
+
+using System.Net.Http.Headers;
+using System.Web.Http;
+
+namespace Solution1
+{
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            // Web API configuration and services
+            config.Formatters.JsonFormatter.SupportedMediaTypes
+                .Add(new MediaTypeHeaderValue("text/html"));
+
+            // Web API routes
+            config.MapHttpAttributeRoutes();
+
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi",
+                routeTemplate: "api/{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+        }
+    }
+}
