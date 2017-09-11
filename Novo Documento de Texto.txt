@@ -179,7 +179,7 @@
     <script src="Scripts/angular-route.js"></script>
     <script src="App/app.js"></script>
 <!-- custom references -->
-    <script src="App/controllers/clienteController.js"></script>
+    <!--<script src="App/controllers/clienteController.js"></script>-->
     <script src="App/repositories/clienteRepository.js"></script>
 
 </body>
