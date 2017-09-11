@@ -75,7 +75,7 @@
                                     <input type="hidden" ng-model="cliente.id"/>
                                     <td><input type="text" ng-model="cliente.nome" class="form-control input-sm" /></td>
                                     <td><input type="text" ng-model="cliente.email" class="form-control input-sm" /></td>
-                                    <td><input type="checkbox" ng-model="cliente.ativo" class="" /></td>
+                                    <td><input type="checkbox" ng-model="cliente.Ativo" class="" /></td>
                                     <td>
                                         <button type="button" class="btn btn-primary" ng-click="atualizarCliente(cliente)">Save</button>
                                         <button type="button" class="btn btn-danger" ng-click="reset()">Cancel</button>
